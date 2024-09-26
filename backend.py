@@ -4,9 +4,9 @@ import apikey
 
 api_key = apikey.get_api_key()
 
-url = f'https://api.eia.gov/series/?api_key={api_key}&series_id=ELEC.GEN.ALL-US-99.A'
-
-response = requests.get(url)
+url = 'https://api.eia.gov/v2/total-energy/data/?frequency=monthly&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000'
+url_with_key = f'{url}&api_key={api_key}'
+response = requests.get(url_with_key)
 
 if response.status_code == 200:
     data = response.json() 
