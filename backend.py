@@ -1,52 +1,49 @@
 import requests
-import json
-import apikey
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from tqdm import tqdm
 
 def generate_table(url):
     response = requests.get(url)
-    response.raise_for_status()  # Check for request errors
-    #https://www.ercot.com/content/cdr/html/20241010_dam_spp.html
+    response.raise_for_status()  
+
     soup = BeautifulSoup(response.content, 'html.parser')
     table = soup.find('table')
-    headers = [th.get_text(strip=True) for th in table.find_all('th')]
-    data = []
-    for row in table.find_all('tr')[1:]:  # Skip the header row
-        cells = [td.get_text(strip=True) for td in row.find_all('td')]
-        if cells:  # Avoid empty rows
-            data.append(cells)
     
-    df = pd.DataFrame(data, columns=headers)
-    return df
-
+    headers = [th.get_text(strip=True) for th in table.find_all('th')]
+    data = [
+        [cell.get_text(strip=True) for cell in row.find_all('td')]
+        for row in table.find_all('tr')[1:] # skip header row
+        if row.find_all('td')
+    ]
+    
+    return pd.DataFrame(data, columns=headers)
 
 ercot_data = {}
 
-
 def build_data(start_yr, start_m, start_d):
-    start_date = datetime(start_yr, start_m, start_d)
-    yesterday = (datetime.now() - timedelta(days=1)).date()
-    current_date = start_date.date()
-    while current_date <= yesterday:
-        t_date = current_date.strftime("%Y%m%d")
-        print(t_date)
+    date = datetime(start_yr, start_m, start_d)
+    days_left = (datetime.now() - date).days + 1
+    
+    ercot_df = pd.DataFrame()
+    
+    for _ in tqdm(range(days_left)):
+        t_date = date.strftime("%Y%m%d")
+
         url = f"https://www.ercot.com/content/cdr/html/{t_date}_real_time_spp.html"
         df = generate_table(url)
+        
+        ercot_df = pd.concat([ercot_df, df], ignore_index=True)
+        
         for column in df.columns:
-            if column not in ercot_data:
-                ercot_data[column] = {}
+            ercot_data.setdefault(column, {})
             
-            for index, row in df.iterrows():
-                date = row['Oper Day']
-                interval = row['Interval Ending']
-                value = row[column]
-                ercot_data[column][(date, interval)] = value
+            for _, row in df.iterrows():
+                key = (row['Oper Day'], row['Interval Ending'])
+                ercot_data[column][key] = row[column]
 
-        current_date += timedelta(days=1)
-    
+        date += timedelta(days=1)
+    return ercot_df
 
-build_data(2024, 5, 11)
-
-
+ercot_df = build_data(2024, 11, 1)
