@@ -46,4 +46,5 @@ def build_data(start_yr, start_m, start_d):
         date += timedelta(days=1)
     return ercot_df
 
-ercot_df = build_data(2024, 11, 1)
+# ercot_df = build_data(2024, 5, 11)
+ercot_df = build_data(2024, 11, 11)

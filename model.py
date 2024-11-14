@@ -1,6 +1,6 @@
 from vowpalwabbit import pyvw
 
-def train_model(model, data, loss_function='logistic'):
+def train_model(model, data):
     for row in data:
         model.learn(row)
     model.save('model.vw')    

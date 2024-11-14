@@ -22,6 +22,3 @@ data_file = ercot.fetch_url(report_list[0][2], Path('path/to/save/report'))
 # Beware of zips with multiple files, or data_files that 
 # are just plain .csv files.  An example for NP6-86-CD data is:
 df = pd.read_csv(data_file, compression='zip')
-
-# Print the column types
-print(df.dtypes)
