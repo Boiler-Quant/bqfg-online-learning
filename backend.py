@@ -3,6 +3,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from tqdm import tqdm
+from sklearn.ensemble import IsolationForest
 
 def generate_table(url):
     response = requests.get(url)
@@ -45,6 +46,24 @@ def build_data(start_yr, start_m, start_d):
 
         date += timedelta(days=1)
     return ercot_df
+
+def remove_outliers(data: pd.DataFrame):
+    """
+    Remove outlier days from the dataframe
+    """
+    fraction = 0.005                    # 0.5% of the data is considered outliers
+    rows = data.shape[0]                # Number of rows in the dataframe
+    rng = np.random.RandomState(42)     # Make results reproducible
+
+    classifier = IsolationForest(
+        max_samples = rows,
+        contamination = fraction,
+        random_stage = rng)
+    classifier.fit(data)                # Fit the random forrest classifier
+
+    labels = 0.5 * classifier.predict(data) + 0.5
+    return df[labels == 1]              # Return the data without outliers
+
 
 # ercot_df = build_data(2024, 5, 11)
 ercot_df = build_data(2024, 11, 11)
