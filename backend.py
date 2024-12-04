@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from sklearn.ensemble import IsolationForest
 
+import os
+
 def generate_table(url):
     response = requests.get(url)
     response.raise_for_status()  
@@ -22,14 +24,15 @@ def generate_table(url):
     
     return pd.DataFrame(data, columns=headers)
 
-ercot_data = {}
+
 
 def build_data(start_yr, start_m, start_d):
     date = datetime(start_yr, start_m, start_d)
     days_left = (datetime.now() - date).days + 1
     
     ercot_df = pd.DataFrame()
-    
+    ercot_data = {}
+        
     for _ in tqdm(range(days_left)):
         t_date = date.strftime("%Y%m%d")
 
@@ -47,6 +50,8 @@ def build_data(start_yr, start_m, start_d):
 
         date += timedelta(days=1)
     return ercot_df
+
+
 
 def remove_outliers(data: pd.DataFrame, fraction: float = 0.005) -> pd.DataFrame:
     """
@@ -66,10 +71,10 @@ def remove_outliers(data: pd.DataFrame, fraction: float = 0.005) -> pd.DataFrame
     return data[labels == 1]              # Return the data without outliers
 
 
-import os
-
-if os.path.exists('ercot.csv'):
-    ercot_df = pd.read_csv('ercot.csv')
-else:
-    ercot_df = build_data(2024, 5, 11)
-    # ercot_df = build_data(2024, 11, 11)
+def get_ercot_df(year=2024, month=5, day=11):
+    if os.path.exists(f'data/ercot-{year}-{month}-{day}.csv'):
+        ercot_df = pd.read_csv(f'data/ercot-{year}-{month}-{day}.csv')
+    else:
+        ercot_df = build_data(year, month, day)
+        ercot_df.to_csv(f'data/ercot-{year}-{month}-{day}.csv', index=False)
+    return ercot_df

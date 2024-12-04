@@ -23,8 +23,5 @@ def df_to_vw(df, label, features=None, tag_col=None):
     if features is None:
         features = df.columns.drop(label).tolist()
     
-    print(type(features))
-    print(df.dtypes)
-        
     converter = DFtoVW.from_column_names(df=df, x=features, y=label)
     return converter.convert_df()
